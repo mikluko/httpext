@@ -1,0 +1,111 @@
+version: 3
+
+dotenv:
+  - .env
+
+tasks:
+
+  clean:
+    desc: cleanup generated files
+    deps:
+      - useragents-clean
+
+  useragents:
+    desc: update user agent string lists
+    deps:
+      - useragents-desktop-macos
+      - useragents-desktop-windows
+      - useragents-mobile-android
+      - useragents-mobile-ios
+      - useragents-tablet-android
+      - useragents-tablet-ios
+
+  useragents-desktop-macos:
+    vars:
+      output: useragent/desktop-macos.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Chrome&software_version_min=70&operating_system_name=macOS&hardware_type_specific=computer&limit=500&order_by=first_seen_at%20desc&times_seen_min=10000"
+          json_query: .search_results.user_agents | map(.user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-desktop-windows:
+    vars:
+      output: useragent/desktop-windows.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Chrome&software_version_min=70&operating_system_name=Windows&hardware_type_specific=computer&limit=500&order_by=first_seen_at%20desc&times_seen_min=10000"
+          json_query: .search_results.user_agents | map(.user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-mobile-ios:
+    vars:
+      output: useragent/mobile-ios.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Safari&software_version_min=12&operating_system_name=iOS&hardware_type_specific=phone&limit=500&order_by=first_seen_at%20desc&times_seen_min=10000"
+          json_query: .search_results.user_agents | map(.user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-mobile-android:
+    vars:
+      output: useragent/mobile-android.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Chrome&software_version_min=70&operating_system_name=Android&hardware_type_specific=phone&limit=500&order_by=first_seen_at%20desc&times_seen_min=2000"
+          json_query: .search_results.user_agents | map(select(.parse.operating_platform_vendor_name == "Google", .parse.operating_platform_vendor_name == "Samsung") | .user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-tablet-ios:
+    vars:
+      output: useragent/tablet-ios.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Safari&software_version_min=12&operating_system_name=iOS&hardware_type_specific=tablet&limit=500&order_by=first_seen_at%20desc&times_seen_min=10000"
+          json_query: .search_results.user_agents | map(.user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-tablet-android:
+    vars:
+      output: useragent/tablet-android.json
+    cmds:
+      - task: useragents-api
+        vars:
+          output:     "{{ .output }}"
+          api_query:  "software_name=Chrome&software_version_min=70&operating_system_name=Android&hardware_type_specific=tablet&limit=500&order_by=first_seen_at%20desc&times_seen_min=500"
+          json_query: .search_results.user_agents | map(select(.parse.operating_platform_vendor_name == "Google", .parse.operating_platform_vendor_name == "Samsung") | .user_agent)
+    status:
+      - test -f {{ .output }}
+
+  useragents-api:
+    preconditions:
+      - which curl
+      - which jq
+      - which mktemp
+    vars:
+      api_url: "https://api.whatismybrowser.com/api/v2/user_agent_database_search"
+    cmds:
+      - |
+        TEMP=$(mktemp)
+        curl --silent --output $TEMP --header "X-API-KEY: $WIMB_API_KEY" "{{ .api_url }}?{{ .api_query }}"
+        jq '{{ .json_query }}' $TEMP > {{ .output }}
+        rm $TEMP
+
+  useragents-clean:
+    cmds:
+      - rm -f useragent/*.json
