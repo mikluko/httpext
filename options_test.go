@@ -82,24 +82,24 @@ func TestWithDisableKeepAlives(t *testing.T) {
 
 func TestWithRequestCallback(t *testing.T) {
 	rq0, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
-	c := New(WithRequestCallback(func(_ *http.Request) (*http.Request, error) {
+	c := New(WithRequestCallback(func(_ *Client, _ *http.Request) (*http.Request, error) {
 		return rq0, nil
 	}))
 	assert.Len(t, c.requestCallbacks, 1)
 	rq1, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
-	rq2, err := c.requestCallbacks[0](rq1)
+	rq2, err := c.requestCallbacks[0](c, rq1)
 	require.NoError(t, err)
 	require.Same(t, rq0, rq2)
 }
 
 func TestWithResponseCallback(t *testing.T) {
 	rs0 := &http.Response{}
-	c := New(WithResponseCallback(func(_ *http.Response) (*http.Response, error) {
+	c := New(WithResponseCallback(func(_ *Client, _ *http.Response) (*http.Response, error) {
 		return rs0, nil
 	}))
 	assert.Len(t, c.responseCallbacks, 1)
 	rs1 := &http.Response{}
-	rs2, err := c.responseCallbacks[0](rs1)
+	rs2, err := c.responseCallbacks[0](c, rs1)
 	require.NoError(t, err)
 	require.Same(t, rs0, rs2)
 }
@@ -108,7 +108,7 @@ func TestWithUserAgent(t *testing.T) {
 	c := New(WithUserAgent(useragent.Any))
 	assert.Len(t, c.requestCallbacks, 1)
 	rq0, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
-	rq1, err := c.requestCallbacks[0](rq0)
+	rq1, err := c.requestCallbacks[0](c, rq0)
 	require.NoError(t, err)
 	require.NotEqual(t, "", rq1.Header.Get("User-Agent"))
 }
@@ -117,7 +117,7 @@ func TestWithUserAgentString(t *testing.T) {
 	c := New(WithUserAgentString("bla-bla"))
 	assert.Len(t, c.requestCallbacks, 1)
 	rq0, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
-	rq1, err := c.requestCallbacks[0](rq0)
+	rq1, err := c.requestCallbacks[0](c, rq0)
 	require.NoError(t, err)
 	require.Equal(t, "bla-bla", rq1.Header.Get("User-Agent"))
 }

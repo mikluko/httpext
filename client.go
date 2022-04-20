@@ -36,7 +36,7 @@ type Client struct {
 func (c *Client) Do(rq *http.Request) (*http.Response, error) {
 	var err error
 	for i := range c.requestCallbacks {
-		rq, err = c.requestCallbacks[i](rq)
+		rq, err = c.requestCallbacks[i](c, rq)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func (c *Client) Do(rq *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	for i := range c.responseCallbacks {
-		rs, err = c.responseCallbacks[i](rs)
+		rs, err = c.responseCallbacks[i](c, rs)
 		if err != nil {
 			return nil, err
 		}
@@ -118,9 +118,9 @@ func (c *Client) CookieValue(url *url.URL, name string) (string, bool) {
 	return cookie.Value, true
 }
 
-type RequestCallback func(rq *http.Request) (*http.Request, error)
+type RequestCallback func(c *Client, rq *http.Request) (*http.Request, error)
 
-type ResponseCallback func(rs *http.Response) (*http.Response, error)
+type ResponseCallback func(c *Client, rs *http.Response) (*http.Response, error)
 
 func defaultJar() *cookiejar.Jar {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})

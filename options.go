@@ -90,14 +90,14 @@ func WithResponseCallback(fn ...ResponseCallback) Option {
 
 func WithUserAgent(ua useragent.UserAgent) Option {
 	str := useragent.String(ua)
-	return WithRequestCallback(func(rq *http.Request) (*http.Request, error) {
+	return WithRequestCallback(func(_ *Client, rq *http.Request) (*http.Request, error) {
 		rq.Header.Set("User-Agent", str)
 		return rq, nil
 	})
 }
 
 func WithUserAgentString(ua string) Option {
-	return WithRequestCallback(func(rq *http.Request) (*http.Request, error) {
+	return WithRequestCallback(func(_ *Client, rq *http.Request) (*http.Request, error) {
 		rq.Header.Set("User-Agent", ua)
 		return rq, nil
 	})
