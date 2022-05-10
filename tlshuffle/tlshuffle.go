@@ -3,7 +3,6 @@ package tlshuffle
 import (
 	"crypto/tls"
 	"math/rand"
-	"time"
 )
 
 var cipherSuitesMain = []uint16{
@@ -45,30 +44,23 @@ func DefaultSuites() []uint16 {
 	return suites
 }
 
-func init() {
-	rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
-
-var rnd *rand.Rand
-
 func ShuffleCipherSuites(suites []uint16) {
 	if len(suites) < 3 {
 		return
 	}
-	if rnd.Intn(2) == 1 {
+	if rand.Intn(2) == 1 {
 		suites[1], suites[2] = suites[2], suites[1]
 	}
 	if len(suites) < 5 {
 		return
 	}
-	rnd.Shuffle(len(suites[3:]), func(i, j int) {
+	rand.Shuffle(len(suites[3:]), func(i, j int) {
 		suites[i+3], suites[j+3] = suites[j+3], suites[i+3]
 	})
 }
 
 func CipherSuites() []uint16 {
-	suites := make([]uint16, len(defaultSuites))
-	copy(suites, defaultSuites)
+	suites := DefaultSuites()
 	ShuffleCipherSuites(suites)
 	return suites
 }
