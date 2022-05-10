@@ -61,3 +61,11 @@ func TestShuffleConfig(t *testing.T) {
 	ShuffleConfig(&cfg)
 	testSuites(t, defaultSuites, cfg.CipherSuites)
 }
+
+func BenchmarkCipherSuites(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = CipherSuites()
+		}
+	})
+}
